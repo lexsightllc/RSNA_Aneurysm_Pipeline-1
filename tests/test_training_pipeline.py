@@ -17,6 +17,9 @@ sys.path.append(str(Path(__file__).parent.parent.absolute()))
 import pytest
 import numpy as np
 import pandas as pd
+import torch
+import torch.optim as optim
+from torch.utils.data import DataLoader
 from src.train_model import (
     AneurysmDataset,
     AneurysmTrainer,
@@ -109,7 +112,7 @@ def test_trainer_initialization():
     
     # Check optimizer and loss function
     assert isinstance(trainer.optimizer, optim.AdamW)
-    assert isinstance(trainer.criterion, (nn.BCEWithLogitsLoss, type(trainer.criterion)))  # FocalLoss or BCEWithLogitsLoss
+    assert isinstance(trainer.criterion, (torch.nn.BCEWithLogitsLoss, type(trainer.criterion)))  # FocalLoss or BCEWithLogitsLoss
 
 
 def test_training_loop():
