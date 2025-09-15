@@ -163,7 +163,7 @@ class AneurysmTrainer:
         logger.info(f"Using device: {self.device}")
         
         # Initialize model
-        self.model = Compact3DModel(num_classes=len(RSNA_ALL_LABELS))
+        self.model = Compact3DModel(num_classes=len(self.label_cols))
         self.model.to(self.device)
         
         # Loss function
@@ -991,6 +991,7 @@ def main(**kwargs):
                 # Train model
                 logger.info(f"Training on {len(train_paths)} samples, validating on {len(val_paths)} samples")
                 trainer = AneurysmTrainer(fold_config)
+                trainer.label_cols = [col for col in RSNA_ALL_LABELS if col != 'SeriesInstanceUID']
                 fold_auc = trainer.train(train_paths, val_paths, labels)
                 fold_aucs.append(fold_auc)
                 
