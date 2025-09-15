@@ -436,16 +436,25 @@ def load_training_data(data_dir: str):
     return series_paths, labels
 
 def main(**kwargs):
+    """
+    Main entry point for training.
+    
+    Args:
+        **kwargs: Can include any of the command line arguments as keyword arguments.
+                 Supported args: data_dir, config, output_dir, num_folds, debug
+    """
+    import argparse
+    
     # Check if running in Kaggle environment
     is_kaggle = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ
     
-    # Default paths
-    default_data_dir = '/kaggle/input/rsna-intracranial-aneurysm-detection' if is_kaggle else './data'
-    default_config_path = "/kaggle/input/rsna-aneurysm-pipeline-1/config/pipeline_config.json" if is_kaggle else "./config/pipeline_config.json"
+    # Default config path
+    default_config_path = '/kaggle/input/rsna-aneurysm-pipeline-1/config/pipeline_config.json' if is_kaggle else 'config/pipeline_config.json'
     
+    # Set up argument parser
     parser = argparse.ArgumentParser(description='Train RSNA Aneurysm Detection Model')
-    parser.add_argument('--data-dir', type=str, default=default_data_dir,
-                      help=f'Path to data directory (default: {default_data_dir})')
+    parser.add_argument('--data-dir', type=str, required=not is_kaggle,
+                      help='Path to the directory containing training data')
     parser.add_argument('--config', type=str, default=default_config_path,
                       help=f'Path to config JSON file (default: {default_config_path})')
     parser.add_argument('--output-dir', type=str, 
@@ -456,16 +465,24 @@ def main(**kwargs):
     
     # If kwargs are provided, use those, otherwise parse from command line
     if kwargs:
-        args = argparse.Namespace(**kwargs)
+        # Ensure debug flag is properly set if passed as a boolean
+        if 'debug' in kwargs and isinstance(kwargs['debug'], bool):
+            if kwargs['debug']:
+                kwargs['debug'] = True
+            else:
+                del kwargs['debug']  # Let it use the default (False)
+        args = parser.parse_args(args=[])
+        for key, value in kwargs.items():
+            setattr(args, key.replace('-', '_'), value)
     else:
         args = parser.parse_args()
     
     # Default configuration
     config = {
-        'batch_size': 2 if args.debug else 4,
+        'batch_size': 2 if getattr(args, 'debug', False) else 4,
         'learning_rate': 1e-4,
         'weight_decay': 1e-5,
-        'num_epochs': 5 if args.debug else 100,
+        'num_epochs': 5 if getattr(args, 'debug', False) else 100,
         'input_size': [128, 128, 128],
         'use_focal_loss': True,
         'focal_alpha': 1,
@@ -473,7 +490,7 @@ def main(**kwargs):
         'use_weighted_sampling': True,
         'gradient_clip': 1.0,
         'early_stopping_patience': 10,
-        'num_workers': 0 if args.debug else 4,
+        'num_workers': 0 if getattr(args, 'debug', False) else 4,
         'output_dir': args.output_dir
     }
     
@@ -486,8 +503,9 @@ def main(**kwargs):
     # Load data
     series_paths, labels = load_training_data(args.data_dir)
     
-    if args.debug:
+    if getattr(args, 'debug', False):
         # Use smaller subset for debugging
+        logger.info("Debug mode: Using smaller dataset (20 samples)")
         series_paths = series_paths[:20]
         labels = labels.head(20)
     

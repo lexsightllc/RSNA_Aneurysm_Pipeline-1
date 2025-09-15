@@ -28,6 +28,8 @@ if __name__ == "__main__":
     train_parser.add_argument('--data-dir', type=str, help='Path to data directory')
     train_parser.add_argument('--output-dir', type=str, help='Output directory for models')
     train_parser.add_argument('--config', type=str, help='Path to config file')
+    train_parser.add_argument('--debug', action='store_true', help='Enable debug mode with smaller dataset')
+    train_parser.add_argument('--num-folds', type=int, default=5, help='Number of cross-validation folds')
     
     # Inference command
     infer_parser = subparsers.add_parser('infer', help='Run inference')
