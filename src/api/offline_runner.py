@@ -19,39 +19,41 @@ import json
 import time
 import math
 import logging
+import traceback
+import argparse
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple, Callable, Union
 
-# Setup paths first
+# Add project root to Python path
+project_root = Path(__file__).parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+# Now import local modules
 from src.utils.path_utils import PATHS
 
 # Import project modules
+from src.utils.predictor_loader import load_predictor_adapter, setup_environment
+from src.constants import (
+    RSNA_ALL_LABELS,
+    RSNA_LOCATION_LABELS,
+    RSNA_ANEURYSM_PRESENT_LABEL,
+    REQUIRED_COLUMNS,
+    DEFAULT_SUBMISSION_CSV
+)
+from src.utils.calibration import load_calibrator
+from src.validate_submission import validate_submission_file
+
+# Try to import optional dependencies
 try:
-    from src.utils.predictor_loader import load_predictor_adapter, setup_environment
-    from src.constants import (
-        RSNA_ALL_LABELS,
-        RSNA_LOCATION_LABELS,
-        RSNA_ANEURYSM_PRESENT_LABEL,
-        REQUIRED_COLUMNS,
-        DEFAULT_SUBMISSION_CSV
-    )
-    from src.utils.calibration import load_calibrator
-    from src.validate_submission import validate_submission_file
+    import polars as pl
+except ImportError:
+    pl = None
     
-    # Try to import optional dependencies
-    try:
-        import polars as pl
-    except ImportError:
-        pl = None
-        
-    try:
-        import pydicom
-    except ImportError:
-        pydicom = None
-        
-except ImportError as e:
-    print(f"Failed to import project modules: {e}", file=sys.stderr)
-    raise
+try:
+    import pydicom
+except ImportError:
+    pydicom = None
 
 import numpy as np
 import pandas as pd
@@ -65,6 +67,8 @@ ID_COL = "SeriesInstanceUID"
 
 # Type aliases
 PredictionResult = Dict[str, float]
+
+
 
 
 def _is_dicom_file(path: Path) -> bool:

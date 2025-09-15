@@ -34,7 +34,7 @@
     "calibration_path": "models/calibration.pkl"
   },
   "heuristics_config": {
-    "data_dir": "/Users/augustolex/Desktop/RSNA Aneurysm Kaggle/data",
+    "data_dir": "data",
     "use_location_priors": true,
     "use_modality_adjustments": true,
     "use_demographic_adjustments": true,

@@ -20,8 +20,8 @@ def setup_paths():
         # In Kaggle, the notebook is in /kaggle/working
         project_root = Path('/kaggle/input/rsna-aneurysm-pipeline-1')
     else:
-        # Local development - go up from src directory
-        project_root = Path(__file__).parent.parent
+        # Local development - go up from src/utils to get to project root
+        project_root = Path(__file__).parent.parent.parent
     
     # Add project root to Python path if not already there
     if str(project_root) not in sys.path:
