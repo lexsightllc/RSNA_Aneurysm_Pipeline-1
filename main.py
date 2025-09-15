@@ -45,7 +45,9 @@ if __name__ == "__main__":
         train_args.pop('command', None)
         train_model_main(**train_args)
     elif args.command == 'infer':
-        offline_runner_main()
+        # Convert args to a dictionary and remove the command
+        infer_args = {k: v for k, v in vars(args).items() if k != 'command'}
+        offline_runner_main(**infer_args)
     else:
         parser.print_help()
         sys.exit(1)

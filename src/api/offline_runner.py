@@ -285,64 +285,57 @@ def run_offline_inference(
     return df
 
 
-def main():
-    """Command-line interface for the offline runner."""
-    parser = argparse.ArgumentParser(
-        description="Run offline inference for RSNA Intracranial Aneurysm Detection",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+def main(series_root: str = None, output: str = None, limit: int = None, 
+         calibrate: bool = True, verbose: bool = False, **kwargs):
+    """
+    Run the offline inference pipeline.
     
-    parser.add_argument(
-        "--series-root",
-        type=str,
-        required=True,
-        help="Path to directory containing DICOM series subdirectories"
-    )
-    
-    parser.add_argument(
-        "--output",
-        "-o",
-        type=str,
-        default=DEFAULT_SUBMISSION_CSV,
-        help="Output CSV file path"
-    )
-    
-    parser.add_argument(
-        "--limit",
-        type=int,
-        default=None,
-        help="Maximum number of series to process (for testing)"
-    )
-    
-    parser.add_argument(
-        "--no-calibration",
-        action="store_true",
-        help="Disable calibration"
-    )
-    
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug logging"
-    )
-    
-    args = parser.parse_args()
+    Args:
+        series_root: Path to directory containing DICOM series subdirectories
+        output: Output CSV path (default: submission.csv in current directory)
+        limit: Maximum number of series to process (for testing)
+        calibrate: Whether to apply calibration if available
+        verbose: Enable verbose logging
+        **kwargs: Additional keyword arguments (ignored)
+    """
+    # Handle command line arguments if not provided
+    if series_root is None:
+        parser = argparse.ArgumentParser(description='RSNA Aneurysm Detection - Offline Inference Runner')
+        parser.add_argument('--series-root', type=str, required=True,
+                          help='Path to directory containing DICOM series subdirectories')
+        parser.add_argument('--output', type=str, default=DEFAULT_SUBMISSION_CSV,
+                          help=f'Output CSV path (default: {DEFAULT_SUBMISSION_CSV})')
+        parser.add_argument('--limit', type=int, default=None,
+                          help='Limit number of series to process (for testing)')
+        parser.add_argument('--no-calibration', action='store_false', dest='calibrate',
+                          help='Disable calibration')
+        parser.add_argument('--verbose', '-v', action='store_true',
+                          help='Enable verbose logging')
+        
+        args = parser.parse_args()
+        series_root = args.series_root
+        output = args.output
+        limit = args.limit
+        calibrate = args.calibrate
+        verbose = args.verbose
     
     # Configure logging
-    log_level = logging.DEBUG if args.debug else logging.INFO
-    logger.setLevel(log_level)
+    log_level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
     
+    # Run inference
     try:
         run_offline_inference(
-            series_root=args.series_root,
-            output_path=args.output,
-            limit=args.limit,
-            calibrate=not args.no_calibration
+            series_root=series_root,
+            output_path=output,
+            limit=limit,
+            calibrate=calibrate
         )
+        logger.info(f"Successfully wrote submission to {output}")
     except Exception as e:
-        logger.error(f"Inference failed: {e}")
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(traceback.format_exc())
+        logger.error(f"Error during inference: {str(e)}")
+        if verbose:
+            logger.error(traceback.format_exc())
         sys.exit(1)
 
 
