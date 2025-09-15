@@ -182,7 +182,7 @@ class AneurysmTrainer:
         
         # Scheduler
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer, mode='max', factor=0.5, patience=5, verbose=True
+            self.optimizer, mode='max', factor=0.5, patience=5
         )
         
         # Metrics tracking
@@ -445,19 +445,19 @@ class AneurysmTrainer:
             logger.error(f"Fatal error during training: {str(e)}", exc_info=True)
             return 0.5
 
-def load_training_data(data_dir: str):
+def load_training_data(data_dir: str, config: Optional[Dict[str, Any]] = None):
     """
     Load training data paths and labels with enhanced Kaggle support.
     
     Args:
         data_dir: Path to the directory containing training data
+        config: Configuration dictionary (for debug mode detection)
         
     Returns:
         tuple: (list_of_series_paths, labels_dataframe)
-    
-    Raises:
-        FileNotFoundError: If critical files are not found
     """
+    if config is None:
+        config = {}
     data_path = Path(data_dir)
     logger = logging.getLogger(__name__)
     
@@ -507,10 +507,22 @@ def load_training_data(data_dir: str):
                 
     if train_labels_path is None:
         available_files = [str(p) for p in data_path.rglob("*")]
-        logger.error(f"Could not find train_labels.csv in any expected location.")
-        logger.error(f"Searched in: {[str(p) for p in possible_label_paths]}")
-        logger.error(f"Available files: {available_files[:20]}...")
-        raise FileNotFoundError("Could not find train_labels.csv in any expected location")
+        
+        if config.get('debug', False):
+            logger.warning("Debug mode: Creating dummy labels since train_labels.csv not found")
+            # Create dummy labels as fallback
+            series_ids = [f"dummy_series_{i}" for i in range(10)]
+            labels_df = pd.DataFrame({
+                'SeriesInstanceUID': series_ids,
+                'Aneurysm Present': np.random.randint(0, 2, size=10),
+                **{loc: np.random.randint(0, 2, size=10) for loc in RSNA_LOCATION_LABELS}
+            })
+            return [f"dummy_series_{i}" for i in range(10)], labels_df
+        else:
+            logger.error(f"Could not find train_labels.csv in any expected location.")
+            logger.error(f"Searched in: {[str(p) for p in possible_label_paths]}")
+            logger.error(f"Available files: {available_files[:20]}...")
+            raise FileNotFoundError("Could not find train_labels.csv in any expected location")
     
     # Find the train directory
     train_dir = None
@@ -530,7 +542,7 @@ def load_training_data(data_dir: str):
         logger.error(f"Searched in: {[str(p) for p in possible_train_dirs]}")
         
         # Create dummy data as fallback
-        logger.warning("Creating dummy data to allow script to continue")
+        logger.warning("No DICOM series found. Creating dummy paths for testing.")
         dummy_series = [f"dummy_series_{i}" for i in range(10)]
         dummy_labels = pd.DataFrame({
             'SeriesInstanceUID': [f'dummy_series_{i}' for i in range(10)],
@@ -765,7 +777,7 @@ def main(**kwargs):
             output_dir=args.output_dir,
             num_folds=args.num_folds,
             debug=args.debug,
-            seed=args.seed
+            seed=getattr(args, 'seed', 42)  # Handle missing seed argument
         )
         
         logger.info("Configuration:")
@@ -790,7 +802,7 @@ def main(**kwargs):
         data_dir = config['data_dir']
         logger.info(f"Loading data from: {data_dir}")
         
-        series_paths, labels = load_training_data(data_dir)
+        series_paths, labels = load_training_data(data_dir, config)
         logger.info(f"Found {len(series_paths)} DICOM series and {len(labels)} labels")
         
         if len(series_paths) == 0 or len(labels) == 0:
