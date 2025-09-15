@@ -371,40 +371,86 @@ class AneurysmTrainer:
         
         return best_auc
 
-def load_training_data(data_dir: str) -> Tuple[List[str], pd.DataFrame]:
-    """Load training data paths and labels."""
+def load_training_data(data_dir: str):
+    """Load training data paths and labels.
+    
+    Args:
+        data_dir: Path to the directory containing training data
+        
+    Returns:
+        tuple: (list_of_series_paths, labels_dataframe)
+    """
     data_path = Path(data_dir)
     
-    # Load labels
-    train_csv = data_path / 'raw' / 'train.csv'
-    if not train_csv.exists():
-        # Try alternative locations
-        train_csv = Path('/Users/augustolex/Library/Mobile Documents/com~apple~CloudDocs/Downloads/train.csv')
+    # Check if running in Kaggle environment
+    is_kaggle = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ
     
-    if not train_csv.exists():
-        raise FileNotFoundError(f"Training labels not found at {train_csv}")
-    
-    labels = pd.read_csv(train_csv)
-    logger.info(f"Loaded {len(labels)} training labels")
-    
-    # Find DICOM series directories
-    series_root = data_path / 'raw' / 'train'
-    if not series_root.exists():
-        logger.warning(f"DICOM series directory not found at {series_root}")
-        # Create dummy paths for testing
-        series_paths = [f"dummy_series_{i}" for i in range(len(labels))]
+    if is_kaggle:
+        # Kaggle specific paths
+        train_labels_path = data_path / "train_labels.csv"
+        train_dir = data_path / "train"
     else:
-        series_paths = [str(p) for p in series_root.iterdir() if p.is_dir()]
+        # Local development paths
+        train_labels_path = data_path / "train" / "train_labels.csv"
+        train_dir = data_path / "train"
+    
+    # Load labels
+    try:
+        labels_df = pd.read_csv(train_labels_path)
+        logger.info(f"Loaded {len(labels_df)} training labels from {train_labels_path}")
+    except Exception as e:
+        logger.error(f"Error loading training labels: {e}")
+        raise
+    
+    # Get all series paths
+    series_paths = []
+    try:
+        if is_kaggle:
+            # In Kaggle, the structure is different
+            for study_dir in train_dir.glob("*"):
+                if study_dir.is_dir():
+                    series_paths.extend([str(p) for p in study_dir.glob("*") if p.is_dir()])
+        else:
+            # Local structure
+            for study_dir in train_dir.glob("*"):
+                if study_dir.is_dir():
+                    series_paths.extend([str(p) for p in study_dir.glob("*") if p.is_dir()])
+        
+        logger.info(f"Found {len(series_paths)} DICOM series")
+        
+        # If no series found, create dummy paths for testing
+        if not series_paths:
+            logger.warning("No DICOM series found. Creating dummy paths for testing.")
+            series_paths = [f"dummy_series_{i}" for i in range(len(labels_df))]
+            
+        return series_paths, labels_df
+        
+    except Exception as e:
+        logger.error(f"Error loading DICOM series: {e}")
+        # If error occurs, return dummy data to allow the script to run
+        logger.warning("Returning dummy data due to error")
+        return [f"dummy_series_{i}" for i in range(10)], pd.DataFrame()
     
     logger.info(f"Found {len(series_paths)} DICOM series")
     
     return series_paths, labels
 
 def main():
+    # Check if running in Kaggle environment
+    is_kaggle = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ
+    
+    # Set default paths based on environment
+    default_data_dir = "/kaggle/input/rsna-intracranial-aneurysm-detection" if is_kaggle else "./data"
+    default_config_path = "/kaggle/input/rsna-aneurysm-pipeline-1/config/pipeline_config.json" if is_kaggle else "./config/pipeline_config.json"
+    
     parser = argparse.ArgumentParser(description='Train RSNA Aneurysm Detection Model')
-    parser.add_argument('--data-dir', type=str, default='/Users/augustolex/Desktop/RSNA Aneurysm Kaggle/data',
-                       help='Path to data directory')
-    parser.add_argument('--config', type=str, help='Path to config JSON file')
+    parser.add_argument('--data-dir', type=str, default=default_data_dir,
+                      help=f'Path to data directory (default: {default_data_dir})')
+    parser.add_argument('--config', type=str, default=default_config_path,
+                      help=f'Path to config JSON file (default: {default_config_path})')
+    parser.add_argument('--output-dir', type=str, 
+                      default='/kaggle/working' if is_kaggle else './output',
+                      help='Directory to save model checkpoints and logs')
     parser.add_argument('--output-dir', type=str, default='models', help='Output directory for models')
     parser.add_argument('--num-folds', type=int, default=5, help='Number of CV folds')
     parser.add_argument('--debug', action='store_true', help='Debug mode with smaller dataset')

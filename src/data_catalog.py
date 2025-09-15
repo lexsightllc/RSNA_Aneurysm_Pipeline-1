@@ -13,10 +13,28 @@ import polars as pl
 from jsonschema import validate
 
 # Constants
-REPO_ROOT = Path(__file__).parent.parent  # Go up to project root
-DATA_DIR = REPO_ROOT / "data"
-STANDARDIZED_DIR = DATA_DIR / "standardized"
-SCHEMA_DIR = REPO_ROOT / "schemas"
+import os
+
+# Check if running in Kaggle environment
+IS_KAGGLE = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ
+
+if IS_KAGGLE:
+    # Kaggle paths
+    DATA_DIR = Path("/kaggle/input/rsna-intracranial-aneurysm-detection")
+    OUTPUT_DIR = Path("/kaggle/working")
+    SCHEMA_DIR = Path("/kaggle/input/rsna-aneurysm-pipeline-1/schemas")
+    STANDARDIZED_DIR = OUTPUT_DIR / "standardized"
+else:
+    # Local development paths
+    REPO_ROOT = Path(__file__).parent.parent
+    DATA_DIR = REPO_ROOT / "data"
+    STANDARDIZED_DIR = DATA_DIR / "standardized"
+    SCHEMA_DIR = REPO_ROOT / "schemas"
+    OUTPUT_DIR = REPO_ROOT / "output"
+
+# Create necessary directories
+STANDARDIZED_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Load schemas
 SCHEMAS = {}
