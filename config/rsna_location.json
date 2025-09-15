@@ -1,0 +1,9 @@
+{
+  "Anterior Communicating Artery": 0.325,
+  "Left Posterior Communicating Artery": 0.325,
+  "Right Posterior Communicating Artery": 0.325,
+  "Left Middle Cerebral Artery": 0.1,
+  "Right Middle Cerebral Artery": 0.1,
+  "Basilar Tip": 0.05,
+  "Other Posterior Circulation": 0.02
+}

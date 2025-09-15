@@ -1,0 +1,29 @@
+phase_rules:
+- match:
+    series_description:
+    - arterial
+    - cta
+    - angio
+  actions:
+    aneurysm_present_mult: 1.1
+    min_volume_mm3_mult: 0.95
+- match:
+    series_description:
+    - venous
+    - delay
+  actions:
+    aneurysm_present_mult: 0.92
+    min_volume_mm3_mult: 1.05
+dicom_tags_to_check:
+- SeriesDescription
+- ContrastBolusAgent
+- ImageType
+- AcquisitionTime
+- StudyDescription
+artifact_suppressors:
+- when:
+    recent_thrombolysis: true
+  suppress:
+  - cortical_staining
+  - luxury_perfusion
+notes: Conservative multipliers; tune with OOF calibration.

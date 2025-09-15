@@ -1,0 +1,228 @@
+{
+  "files": [
+    {
+      "path": "PIPELINE_GUIDE.md",
+      "sha256": "35a55431b249caed283d65d964184ee8e76f58d5c8ad8907f2de08c59fc5b66f"
+    },
+    {
+      "path": "README.md",
+      "sha256": "27b22e3e429da232fd34d3a350635e904243685d54f44612aa690d6a8485d96b"
+    },
+    {
+      "path": "VERSION.txt",
+      "sha256": "1a0c312cdf5111909a58c9ee65e014ff71977eab3882a29238dbf7e001e06e06"
+    },
+    {
+      "path": "config/glossary_synonyms.json",
+      "sha256": "8c61c3fc060b5444dce1dc1f96d825463bbbc1c5be50ea979b23726f922f8e13"
+    },
+    {
+      "path": "config/heuristics.yaml",
+      "sha256": "dfd1c0caeff7e908fb25daedeb045683680339fff30d4772c6d23558e124e8ea"
+    },
+    {
+      "path": "config/pipeline_config.json",
+      "sha256": "ff6d3c63394feb9e2a2010941e544664492f4a0bf60d4da88b3881526b64a8e2"
+    },
+    {
+      "path": "config/rsna_location.json",
+      "sha256": "4187eb32503bf15c412f122363562608b7a76676d540e259f1599378619a8f31"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "dd40ec74d0505a5098e7481443a209ecd05974d35afc7a93c1f4f9090750699a"
+    },
+    {
+      "path": "rsna_aneurysm/README.md",
+      "sha256": "4d3fe451168aa5dcc08852b09394a387d33155cac7bfc7288e1ccb7a70315dbe"
+    },
+    {
+      "path": "rsna_aneurysm/__init__.py",
+      "sha256": "92322f52f92b61f9de5072836a29a00daf90d31ea063f044be3c66a034f6978d"
+    },
+    {
+      "path": "rsna_aneurysm/generate_mock_weights.py",
+      "sha256": "0667111d495dc75e63e88ff41e01b74bea74004820270b0e409aacd59d24631c"
+    },
+    {
+      "path": "rsna_aneurysm/labels_schema.py",
+      "sha256": "6961a030e8bedd790b76b2543a673b2ad30f0e458de2d8836aaf34df757e445c"
+    },
+    {
+      "path": "rsna_aneurysm/model.py",
+      "sha256": "53938b00cbd01ef62955eb3a81c2fcb012cd5907b26982ce01315ead891f3de8"
+    },
+    {
+      "path": "rsna_aneurysm/predict.py",
+      "sha256": "085121979688ad0e19ca41b62533a656bc78acaafea20b250b7bddcb579b744d"
+    },
+    {
+      "path": "rsna_aneurysm/preprocess.py",
+      "sha256": "c20c1e0582237a3ddc7cd7f541b65c34f8ddd67d37457e59f0297ed520d9b10d"
+    },
+    {
+      "path": "rsna_aneurysm/requirements.txt",
+      "sha256": "62ad8adaf1806b2de208c415a50d5167565679c613d5ec32c3f2604db99cbb1e"
+    },
+    {
+      "path": "rsna_aneurysm/rsna_aneurysm.egg-info/PKG-INFO",
+      "sha256": "9dbbf7dfd5be3978cb8e30cb19fd4c4359e29bb4305834a55b196286d73b3273"
+    },
+    {
+      "path": "rsna_aneurysm/rsna_aneurysm.egg-info/SOURCES.txt",
+      "sha256": "e35a8c0aec20c5a68353d240b126b1727b58c0903489657c09f8ab03a726e934"
+    },
+    {
+      "path": "rsna_aneurysm/rsna_aneurysm.egg-info/dependency_links.txt",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "rsna_aneurysm/rsna_aneurysm.egg-info/requires.txt",
+      "sha256": "62ad8adaf1806b2de208c415a50d5167565679c613d5ec32c3f2604db99cbb1e"
+    },
+    {
+      "path": "rsna_aneurysm/rsna_aneurysm.egg-info/top_level.txt",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "rsna_aneurysm/setup.py",
+      "sha256": "d65e0c0b8fdaca57315d6dc8d8d2b22e70215600bfd647405933256cf4c7608c"
+    },
+    {
+      "path": "schemas/calibration_schema.json",
+      "sha256": "5fdc720ad6b2935067860568dad57e8ca30678cbf5cfed10d476dda70b8c67e9"
+    },
+    {
+      "path": "schemas/location_facts_schema.json",
+      "sha256": "f19b49dcec40f9ac17201516d7ce2824354e069dbe0a58c5e62cf334b5fc25d4"
+    },
+    {
+      "path": "schemas/rsna_labels_schema.json",
+      "sha256": "4510853a669419086b716531bb06786af756b67247e9a9f9d239a858b6da6eff"
+    },
+    {
+      "path": "src/.DS_Store",
+      "sha256": "9a49044b621886289702e91152751d78693e9e4044931231473f6575f649fcbc"
+    },
+    {
+      "path": "src/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/adapter_compact3d_rc2.py",
+      "sha256": "2627df4de796487b8a08eb91cd9ccc9b7854001310de1b42b09bdc99b6931a95"
+    },
+    {
+      "path": "src/api/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/api/inference_server_rc2.py",
+      "sha256": "5b74e527687369ab19f79eade5288d8763f96b9b6dc5ae605db425d23d984889"
+    },
+    {
+      "path": "src/api/offline_runner.py",
+      "sha256": "3020dad44d289fa4f89b655a18ef766a6bd6653223c7e5b3faa5e4cba3c4b2ef"
+    },
+    {
+      "path": "src/calibrate_isotonic.py",
+      "sha256": "c004c50b726d68cd550b61575b3fea4d2071ce013d2c5b4df9001cfe81da5cc6"
+    },
+    {
+      "path": "src/constants.py",
+      "sha256": "f3dfe86fb25d4aff33a5da29e01aec41873318befb63c3d576efdfcac1611466"
+    },
+    {
+      "path": "src/data_catalog.py",
+      "sha256": "12033d960939f12eb49899238f4a50cfa1e82aaa338536ffeb1d8b91e32d6f7f"
+    },
+    {
+      "path": "src/evaluate_model.py",
+      "sha256": "1a8f5afee5e14baef9e3a84fa410834ae7fdc3f9e9f220f2ad79b30a8c6b1ea0"
+    },
+    {
+      "path": "src/knowledge_heuristics.py",
+      "sha256": "54ec7e794220dc4cfea0a6eeeba9c652f83a971b6920a3f4fb32b0f8f9a5596a"
+    },
+    {
+      "path": "src/metadata.py",
+      "sha256": "f905882f93f4dc1f20a7873ef9856bcbdb77a3623b2eaafdd2b74b5c9710db2a"
+    },
+    {
+      "path": "src/models/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/models/exec_rc2_offline.py",
+      "sha256": "36b4a96748024a0e8420a8c08a13c8ac39ff86ac6a3989a75ffc7dc1159c3260"
+    },
+    {
+      "path": "src/run_inference_rc2.py",
+      "sha256": "097e8d4f9b852f6de093831a30c58b07e22dd2da258cd05883bf3aca32bba8a5"
+    },
+    {
+      "path": "src/train_model.py",
+      "sha256": "0e49786f7017865a672a3aade2374f29dae32deffbdd653e570c67102a9170a9"
+    },
+    {
+      "path": "src/utils/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/utils/calibration.py",
+      "sha256": "413ffb693412f64af6446c0325a1fab5eb3e4548c1206e31007d32910f163daa"
+    },
+    {
+      "path": "src/utils/prediction_utils.py",
+      "sha256": "e1794bcee0ac3eb4cb9d20f52a250c91228ccbf997bec42d337a7f1de1f2a021"
+    },
+    {
+      "path": "src/utils/predictor_loader.py",
+      "sha256": "938516d82d69535786b28ed8a584f4a9621f837af992c2099e204e590040be92"
+    },
+    {
+      "path": "src/utils/validate_data.py",
+      "sha256": "2d303791e1f276f7464045b04f6e67ae6440a2fa4f0373812b663f7fe35ace06"
+    },
+    {
+      "path": "src/validate_submission.py",
+      "sha256": "d2bc91f5d45a69b1231cb5cbfbf857ded389a8f26990d52a23ce71aaea7d1f55"
+    },
+    {
+      "path": "tests/.DS_Store",
+      "sha256": "33422f2c5fab02ae7e0475025b4797e2e7092f78be4d764c67685183a0af351a"
+    },
+    {
+      "path": "tests/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "tests/test_configs_and_schemas.py",
+      "sha256": "8b695f0294670de8ed59af377dcdbf46589e4f0cc720b0df50b381c94d82fe24"
+    },
+    {
+      "path": "tests/test_data_schemas.py",
+      "sha256": "3f71a4c214634eadf025787ecf3843bbecff7596e7b5da7ae413c17d6e1a4d93"
+    },
+    {
+      "path": "tests/test_dicom_robustness.py",
+      "sha256": "affc4928a867cefd89e48f31a6c99c4a4f115a4e33e05c87aa5fc473f60ec4ed"
+    },
+    {
+      "path": "tests/test_offline_runner.py",
+      "sha256": "1460e99f34c01a07981b56c7ac61266d030133ed80cf5ad2cae8e7115582910c"
+    },
+    {
+      "path": "tests/test_validate_submission.py",
+      "sha256": "8f42f805b0eaf835d480653a372d480c39941319bd9c7e8b4e951cf96ace6572"
+    },
+    {
+      "path": "tests/test_validator.py",
+      "sha256": "b36bb8b5653128a4dc19c61c764fd8045ef0c7efc20a783f7ed8c0b77a76016b"
+    },
+    {
+      "path": "tests/test_validator_new.py",
+      "sha256": "7dde880f8a6cb24b817fe4b78aa38584c34405387b89dc2282ecd68fc7e6aad3"
+    }
+  ]
+}

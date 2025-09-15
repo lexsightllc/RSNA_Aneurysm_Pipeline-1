@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Isotonic Calibration Schema",
+  "description": "Schema for isotonic calibration data used to calibrate model predictions",
+  "type": "object",
+  "required": ["x", "y"],
+  "properties": {
+    "x": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "minItems": 2,
+      "description": "Input probabilities (must be non-decreasing)"
+    },
+    "y": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "minItems": 2,
+      "description": "Calibrated probabilities (must be non-decreasing)"
+    },
+    "brier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Brier score of the calibration (lower is better)"
+    },
+    "n_pos": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of positive samples used for calibration"
+    },
+    "label": {
+      "type": "string",
+      "description": "Name of the label this calibration is for"
+    },
+    "date_created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the calibration was created"
+    },
+    "model_version": {
+      "type": "string",
+      "description": "Version of the model this calibration is for"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "description": "x and y arrays must be of equal length",
+      "properties": {
+        "x": {},
+        "y": {}
+      },
+      "required": ["x", "y"]
+    },
+    {
+      "if": {
+        "required": ["x", "y"]
+      },
+      "then": {
+        "properties": {
+          "x": {
+            "$comment": "This is validated by the custom validator for monotonicity"
+          },
+          "y": {
+            "$comment": "This is validated by the custom validator for monotonicity"
+          }
+        }
+      }
+    }
+  ]
+}

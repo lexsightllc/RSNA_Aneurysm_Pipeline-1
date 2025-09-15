@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RSNA Aneurysm Labels Schema",
+  "description": "Schema for RSNA Intracranial Aneurysm Detection Challenge labels",
+  "type": "object",
+  "required": [
+    "Left Infraclinoid Internal Carotid Artery",
+    "Right Infraclinoid Internal Carotid Artery",
+    "Left Supraclinoid Internal Carotid Artery",
+    "Right Supraclinoid Internal Carotid Artery",
+    "Left Middle Cerebral Artery",
+    "Right Middle Cerebral Artery",
+    "Anterior Communicating Artery",
+    "Left Anterior Cerebral Artery",
+    "Right Anterior Cerebral Artery",
+    "Left Posterior Communicating Artery",
+    "Right Posterior Communicating Artery",
+    "Basilar Tip",
+    "Other Posterior Circulation",
+    "Aneurysm Present"
+  ],
+  "properties": {
+    "Left Infraclinoid Internal Carotid Artery": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in left infraclinoid ICA"
+    },
+    "Right Infraclinoid Internal Carotid Artery": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in right infraclinoid ICA"
+    },
+    "Left Supraclinoid Internal Carotid Artery": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in left supraclinoid ICA"
+    },
+    "Right Supraclinoid Internal Carotid Artery": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in right supraclinoid ICA"
+    },
+    "Left Middle Cerebral Artery": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in left MCA"
+    },
+    "Right Middle Cerebral Artery": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in right MCA"
+    },
+    "Anterior Communicating Artery": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in ACoA"
+    },
+    "Left Anterior Cerebral Artery": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in left ACA"
+    },
+    "Right Anterior Cerebral Artery": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in right ACA"
+    },
+    "Left Posterior Communicating Artery": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in left PCoA"
+    },
+    "Right Posterior Communicating Artery": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in right PCoA"
+    },
+    "Basilar Tip": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm at basilar tip"
+    },
+    "Other Posterior Circulation": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability of aneurysm in other posterior circulation"
+    },
+    "Aneurysm Present": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Overall probability of any aneurysm present"
+    }
+  },
+  "additionalProperties": false
+}

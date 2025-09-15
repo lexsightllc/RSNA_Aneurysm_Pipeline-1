@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Aneurysm Location Facts Schema",
+  "description": "Schema for knowledge about aneurysm locations including prevalence and clinical significance",
+  "type": "object",
+  "required": ["rsna_label"],
+  "properties": {
+    "rsna_label": {
+      "type": "string",
+      "description": "Canonical RSNA label name matching the rsna_labels.schema.json"
+    },
+    "prevalence_pct": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Estimated prevalence percentage in the general population"
+    },
+    "bleed_pattern": {
+      "type": "string",
+      "description": "Typical hemorrhage patterns associated with aneurysms in this location"
+    },
+    "clinical_signs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Common clinical presentations or signs"
+    },
+    "imaging_tips": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Imaging protocols or views that best visualize this location"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional clinical or anatomical notes"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Alternative names or abbreviations for this location"
+    },
+    "vessel_diameter_mm": {
+      "type": "object",
+      "properties": {
+        "min": {"type": "number", "minimum": 0},
+        "max": {"type": "number", "minimum": 0},
+        "mean": {"type": "number", "minimum": 0},
+        "unit": {"type": "string", "enum": ["mm"], "default": "mm"}
+      },
+      "description": "Typical vessel diameter range in millimeters"
+    },
+    "rupture_risk_factors": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Factors that may increase rupture risk for this location"
+    },
+    "treatment_considerations": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Special considerations for treatment planning"
+    },
+    "references": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Citations or references supporting this information"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when this information was last reviewed/updated (YYYY-MM-DD)"
+    }
+  },
+  "additionalProperties": false
+}

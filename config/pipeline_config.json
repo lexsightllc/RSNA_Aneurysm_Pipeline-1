@@ -1,0 +1,70 @@
+{
+  "model_config": {
+    "input_size": [128, 128, 128],
+    "num_classes": 14,
+    "use_tta": true,
+    "tta_flips": ["lr", "ap", "si"]
+  },
+  "training_config": {
+    "batch_size": 4,
+    "learning_rate": 1e-4,
+    "weight_decay": 1e-5,
+    "num_epochs": 100,
+    "early_stopping_patience": 10,
+    "use_focal_loss": true,
+    "focal_alpha": 1,
+    "focal_gamma": 2,
+    "use_weighted_sampling": true,
+    "gradient_clip": 1.0,
+    "num_workers": 4,
+    "cross_validation_folds": 5
+  },
+  "ensemble_config": {
+    "model_paths": [
+      "models/fold_1/best_model_fold.pth",
+      "models/fold_2/best_model_fold.pth",
+      "models/fold_3/best_model_fold.pth",
+      "models/fold_4/best_model_fold.pth",
+      "models/fold_5/best_model_fold.pth"
+    ],
+    "model_weights": [0.2, 0.2, 0.2, 0.2, 0.2]
+  },
+  "calibration_config": {
+    "method": "isotonic",
+    "calibration_path": "models/calibration.pkl"
+  },
+  "heuristics_config": {
+    "data_dir": "/Users/augustolex/Desktop/RSNA Aneurysm Kaggle/data",
+    "use_location_priors": true,
+    "use_modality_adjustments": true,
+    "use_demographic_adjustments": true,
+    "use_quality_adjustments": true,
+    "min_confidence_threshold": 0.01
+  },
+  "preprocessing_config": {
+    "target_spacing": [1.0, 1.0, 1.0],
+    "window_center": 40,
+    "window_width": 400,
+    "normalize_intensity": true,
+    "apply_windowing": true
+  },
+  "evaluation_config": {
+    "output_dir": "evaluation_results",
+    "save_plots": true,
+    "calculate_calibration": true,
+    "generate_error_analysis": true
+  },
+  "submission_config": {
+    "output_format": "csv",
+    "include_confidence_scores": false,
+    "validate_format": true,
+    "generate_summary": true
+  },
+  "paths": {
+    "data_dir": "/Users/augustolex/Desktop/RSNA Aneurysm Kaggle/data",
+    "models_dir": "models",
+    "output_dir": "results",
+    "train_csv": "/Users/augustolex/Library/Mobile Documents/com~apple~CloudDocs/Downloads/train.csv",
+    "test_csv": "/Users/augustolex/Library/Mobile Documents/com~apple~CloudDocs/Downloads/test.csv"
+  }
+}
