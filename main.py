@@ -40,7 +40,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if args.command == 'train':
-        train_model_main()
+        # Convert args to a dictionary and remove the command
+        train_args = vars(args)
+        train_args.pop('command', None)
+        train_model_main(**train_args)
     elif args.command == 'infer':
         offline_runner_main()
     else:

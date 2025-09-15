@@ -435,12 +435,12 @@ def load_training_data(data_dir: str):
     
     return series_paths, labels
 
-def main():
+def main(**kwargs):
     # Check if running in Kaggle environment
     is_kaggle = 'KAGGLE_KERNEL_RUN_TYPE' in os.environ
     
-    # Set default paths based on environment
-    default_data_dir = "/kaggle/input/rsna-intracranial-aneurysm-detection" if is_kaggle else "./data"
+    # Default paths
+    default_data_dir = '/kaggle/input/rsna-intracranial-aneurysm-detection' if is_kaggle else './data'
     default_config_path = "/kaggle/input/rsna-aneurysm-pipeline-1/config/pipeline_config.json" if is_kaggle else "./config/pipeline_config.json"
     
     parser = argparse.ArgumentParser(description='Train RSNA Aneurysm Detection Model')
@@ -451,11 +451,14 @@ def main():
     parser.add_argument('--output-dir', type=str, 
                       default='/kaggle/working' if is_kaggle else './output',
                       help='Directory to save model checkpoints and logs')
-    parser.add_argument('--output-dir', type=str, default='models', help='Output directory for models')
     parser.add_argument('--num-folds', type=int, default=5, help='Number of CV folds')
     parser.add_argument('--debug', action='store_true', help='Debug mode with smaller dataset')
     
-    args = parser.parse_args()
+    # If kwargs are provided, use those, otherwise parse from command line
+    if kwargs:
+        args = argparse.Namespace(**kwargs)
+    else:
+        args = parser.parse_args()
     
     # Default configuration
     config = {
