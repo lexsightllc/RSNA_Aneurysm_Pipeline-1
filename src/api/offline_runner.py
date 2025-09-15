@@ -18,11 +18,12 @@ import gc
 import json
 import time
 import math
-import argparse
 import logging
-import traceback
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, Callable, Union
+
+# Setup paths first
+from src.utils.path_utils import PATHS
 
 # Import project modules
 try:
@@ -114,18 +115,18 @@ def validate_frame(df: pd.DataFrame) -> Tuple[bool, List[str]]:
     # Check required columns
     missing_cols = set(REQUIRED_COLUMNS) - set(df.columns)
     if missing_cols:
-        errors.append(ErrorMessages.MISSING_COLUMNS.format(", ".join(sorted(missing_cols))))
+        errors.append(f"Missing required columns: {', '.join(sorted(missing_cols))}")
     
     # Check for unexpected columns
     extra_cols = set(df.columns) - set(REQUIRED_COLUMNS)
     if extra_cols:
-        errors.append(ErrorMessages.UNEXPECTED_COLUMNS.format(", ".join(sorted(extra_cols))))
+        errors.append(f"Unexpected columns: {', '.join(sorted(extra_cols))}")
     
     # Check for null values
     for col in RSNA_ALL_LABELS:
         if col in df.columns and df[col].isnull().any():
             null_count = df[col].isnull().sum()
-            errors.append(ErrorMessages.NULL_VALUES.format(col, null_count))
+            errors.append(f"Null values in column '{col}': {null_count}")
     
     # Check value ranges
     for col in RSNA_ALL_LABELS:
@@ -134,7 +135,7 @@ def validate_frame(df: pd.DataFrame) -> Tuple[bool, List[str]]:
             max_val = df[col].max()
             if min_val < 0 or max_val > 1:
                 errors.append(
-                    ErrorMessages.OUT_OF_RANGE.format(col, min_val, max_val)
+                    f"Out-of-range values in column '{col}': min={min_val}, max={max_val}"
                 )
     
     return len(errors) == 0, errors
