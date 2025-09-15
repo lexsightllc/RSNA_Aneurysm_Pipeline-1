@@ -908,7 +908,7 @@ def main(**kwargs):
             output_dir=args.output_dir,
             num_folds=args.num_folds,
             debug=args.debug,
-            seed=getattr(args, 'seed', 42)  # Safe access with default
+            seed=args.seed
         )
         
         logger.info("Configuration:")
