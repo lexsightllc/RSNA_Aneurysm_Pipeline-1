@@ -1,31 +1,20 @@
 """RC1-style inference entrypoint adapted for the RSNA aneurysm pipeline repo.
 
 This script mirrors the Kaggle RC1 production server behaviour while
-leveraging the shared utilities that live inside this repository.  It can be
-used directly inside a Kaggle notebook:
+leveraging shared utilities when available. It also includes safe fallbacks
+so you can run it in a Kaggle/Jupyter notebook that doesn’t have the
+package layout on sys.path yet.
 
-```
-import kaggle_evaluation.rsna_inference_server as ks
-from inference_rc1_aneurysm_predictor import predict
+Usage inside a Kaggle notebook:
 
-server = ks.RSNAInferenceServer(predict)
-server.serve()
-```
+    import kaggle_evaluation.rsna_inference_server as ks
+    from inference_rc1_aneurysm_predictor import predict
 
-The implementation keeps the "ultra aggressive" post-processing heuristics
-from the original script, but now integrates tightly with the repository:
+    server = ks.RSNAInferenceServer(predict)
+    server.serve()
 
-* Predictor loading goes through :mod:`src.utils.predictor_loader` to honour
-  the user-packaged ``AneurysmPredictor`` class when available and fall back
-  to the bundled RC2 stub otherwise.
-* Label handling relies on :mod:`src.constants` so the column order always
-  matches the rest of the pipeline.
-* Column canonicalisation/reconciliation use
-  :mod:`src.utils.prediction_utils` to support a variety of predictor output
-  formats (dict / pandas / polars / numpy).
-
-The public surface is a single ``predict(series_path)`` function that returns
-the 14 competition probabilities as a Polars DataFrame without the ID column.
+Public surface: a single `predict(series_path)` that returns the 14
+competition probabilities as a Polars DataFrame (no ID column).
 """
 
 from __future__ import annotations
@@ -34,6 +23,7 @@ import gc
 import os
 import shutil
 import sys
+import tempfile
 import warnings
 from pathlib import Path
 from typing import Dict, Iterable, Mapping, Optional
@@ -44,36 +34,139 @@ import polars as pl
 
 warnings.filterwarnings("ignore")
 
-
 # ---------------------------------------------------------------------------
 # Ensure the repository is importable before touching internal modules.
+# Works in scripts, Kaggle/Jupyter notebooks (no __file__), and when invoked via -m.
+# Ascends until it finds a folder that contains `src/`.
 # ---------------------------------------------------------------------------
-REPO_ROOT = Path(__file__).resolve().parent
+_candidate = globals().get("__file__", None)
+if _candidate is None and sys.argv and sys.argv[0]:
+    _candidate = sys.argv[0]
+
+_base = Path(_candidate).resolve() if _candidate else Path.cwd().resolve()
+REPO_ROOT = _base if _base.is_dir() else _base.parent
+for p in [REPO_ROOT, *REPO_ROOT.parents]:
+    if (p / "src").exists():
+        REPO_ROOT = p
+        break
+
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+# ---------------------------------------------------------------------------
+# Try to import repository constants & utilities; if unavailable, define shims.
+# ---------------------------------------------------------------------------
+_HAVE_SRC = True
+try:
+    from src.constants import (
+        RSNA_ALL_LABELS,
+        RSNA_ANEURYSM_PRESENT_LABEL,
+        RSNA_LOCATION_LABELS,
+    )
+except Exception:
+    _HAVE_SRC = False
+    # Canonical 14-column order (13 locations + presence).
+    RSNA_ALL_LABELS = (
+        "Left Infraclinoid Internal Carotid Artery",
+        "Right Infraclinoid Internal Carotid Artery",
+        "Left Supraclinoid Internal Carotid Artery",
+        "Right Supraclinoid Internal Carotid Artery",
+        "Left Middle Cerebral Artery",
+        "Right Middle Cerebral Artery",
+        "Anterior Communicating Artery",
+        "Left Anterior Cerebral Artery",
+        "Right Anterior Cerebral Artery",
+        "Left Posterior Communicating Artery",
+        "Right Posterior Communicating Artery",
+        "Basilar Tip",
+        "Other Posterior Circulation",
+        "Aneurysm Present",
+    )
+    RSNA_ANEURYSM_PRESENT_LABEL = "Aneurysm Present"
+    RSNA_LOCATION_LABELS = RSNA_ALL_LABELS[:-1]
 
-from src.constants import (  # noqa: E402  (deferred import after sys.path)
-    RSNA_ALL_LABELS,
-    RSNA_ANEURYSM_PRESENT_LABEL,
-    RSNA_LOCATION_LABELS,
-)
-from src.utils.predictor_loader import load_predictor_adapter, setup_environment  # noqa: E402
-from src.utils.prediction_utils import (  # noqa: E402
-    canonicalize_columns,
-    reconcile_presence,
-)
+try:
+    from src.utils.predictor_loader import load_predictor_adapter, setup_environment
+except Exception:
 
+    def setup_environment() -> None:
+        os.environ.setdefault("OMP_NUM_THREADS", "1")
+        os.environ.setdefault("MKL_NUM_THREADS", "1")
 
-try:  # pragma: no cover - kaggle runtime only
+    def load_predictor_adapter():
+        # Fallback: no-op predictor; users can replace with their package.
+        def _predict_fn(series_path: str):
+            return {}
+
+        return _predict_fn, "rc1-stub"
+
+try:
+    from src.utils.prediction_utils import canonicalize_columns, reconcile_presence
+except Exception:
+
+    def _norm(s: str) -> str:
+        return "".join(ch for ch in s.lower() if ch.isalnum())
+
+    _CANON = list(RSNA_ALL_LABELS)
+    _CANON_NORM = {_norm(c): c for c in _CANON}
+    _ALIASES = {
+        "aneurysm": "Aneurysm Present",
+        "aneurysmpresent": "Aneurysm Present",
+        "ap": "Aneurysm Present",
+        "leftmca": "Left Middle Cerebral Artery",
+        "rightmca": "Right Middle Cerebral Artery",
+        "acom": "Anterior Communicating Artery",
+        "leftaca": "Left Anterior Cerebral Artery",
+        "rightaca": "Right Anterior Cerebral Artery",
+        "leftpcom": "Left Posterior Communicating Artery",
+        "rightpcom": "Right Posterior Communicating Artery",
+        "basilartip": "Basilar Tip",
+        "otherposteriorcirculation": "Other Posterior Circulation",
+        "leftinfraclinoidinternalcarotidartery": "Left Infraclinoid Internal Carotid Artery",
+        "rightinfraclinoidinternalcarotidartery": "Right Infraclinoid Internal Carotid Artery",
+        "leftsupraclinoidinternalcarotidartery": "Left Supraclinoid Internal Carotid Artery",
+        "rightsupraclinoidinternalcarotidartery": "Right Supraclinoid Internal Carotid Artery",
+    }
+
+    def _map_name(col: str) -> str:
+        key = _norm(col)
+        if key in _CANON_NORM:
+            return _CANON_NORM[key]
+        if key in _ALIASES:
+            return _ALIASES[key]
+        for canon in _CANON:
+            if all(tok in _norm(canon) for tok in key.split()):
+                return canon
+        return col
+
+    def canonicalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+        renamed = {c: _map_name(str(c)) for c in df.columns}
+        df2 = df.rename(columns=renamed).copy()
+        for c in RSNA_ALL_LABELS:
+            if c not in df2.columns:
+                df2[c] = np.nan
+        return df2[[*RSNA_ALL_LABELS]]
+
+    def reconcile_presence(df: pd.DataFrame) -> pd.DataFrame:
+        if RSNA_ANEURYSM_PRESENT_LABEL not in df.columns or df[RSNA_ANEURYSM_PRESENT_LABEL].isna().all():
+            loc = np.clip(
+                df.loc[:, list(RSNA_LOCATION_LABELS)].astype(float).fillna(0.0).to_numpy(),
+                1e-6,
+                1 - 1e-6,
+            )
+            ap = 1.0 - np.prod(1.0 - loc, axis=1)
+            df = df.copy()
+            df[RSNA_ANEURYSM_PRESENT_LABEL] = ap
+        return df
+
+# Kaggle server import ------------------------------------------------------
+try:  # pragma: no cover
     import kaggle_evaluation.rsna_inference_server as kaggle_server  # type: ignore
-except Exception:  # pragma: no cover - local/unit-test environment
+except Exception:  # pragma: no cover
     kaggle_server = None
-
 
 # Competition constants -----------------------------------------------------
 LABEL_COLS = list(RSNA_ALL_LABELS)
-
 
 # Global predictor handle ---------------------------------------------------
 PREDICT_FN = None
@@ -99,12 +192,11 @@ def load_model() -> None:
     setup_environment()
 
     try:
-        # Honour packaged predictors first, then bundled fallbacks.
         predict_fn, predictor_name = load_predictor_adapter()
         PREDICT_FN = predict_fn
         PREDICTOR_NAME = predictor_name
         print(f"✅ Predictor initialised: {predictor_name}")
-    except Exception as exc:  # pragma: no cover - only triggered on failure
+    except Exception as exc:  # pragma: no cover
         print(f"❌ Failed to load predictor adapter: {exc}")
         PREDICT_FN = None
         PREDICTOR_NAME = "error"
@@ -202,21 +294,17 @@ def _run_predictor(series_path: str) -> Dict[str, float]:
     try:
         output = PREDICT_FN(series_path)
         return _extract_predictions(output, os.path.basename(series_path))
-    except Exception as exc:  # pragma: no cover - runtime safeguard
+    except Exception as exc:  # pragma: no cover
         print(f"⚠️ Predictor failed: {exc}")
         return {}
 
 
-def _ensemble_predictions(
-    predictions: Iterable[np.ndarray],
-) -> np.ndarray:
+def _ensemble_predictions(predictions: Iterable[np.ndarray]) -> np.ndarray:
     preds = list(predictions)
     if not preds:
         return np.random.uniform(0.02, 0.15, len(LABEL_COLS))
-
     if len(preds) == 1:
         return preds[0]
-
     weights = np.array([0.4, 0.3, 0.3][: len(preds)], dtype=float)
     weights /= weights.sum()
     stacked = np.stack(preds, axis=0)
@@ -236,9 +324,16 @@ def _adjust_predictions(vec: np.ndarray, num_dicoms: int) -> np.ndarray:
         adjusted *= 1.08
 
     location_scores = adjusted[:-1]
-    max_location = float(location_scores.max(initial=0.0))
-    mean_location = float(location_scores.mean(initial=0.0))
-    top3_mean = float(np.mean(np.sort(location_scores)[-3:]))
+    # Avoid numpy versions that don't accept `initial=`; guard for empties.
+    max_location = float(location_scores.max()) if location_scores.size else 0.0
+    mean_location = float(location_scores.mean()) if location_scores.size else 0.0
+    if location_scores.size >= 3:
+        top3 = np.sort(location_scores)[-3:]
+        top3_mean = float(np.mean(top3))
+    elif location_scores.size > 0:
+        top3_mean = float(np.mean(location_scores))
+    else:
+        top3_mean = 0.0
 
     presence = max(
         adjusted[-1],
@@ -255,7 +350,6 @@ def _adjust_predictions(vec: np.ndarray, num_dicoms: int) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # Public predict API
 # ---------------------------------------------------------------------------
-
 
 def predict(series_path: str) -> pl.DataFrame:
     """Predict probabilities for a single DICOM series."""
@@ -287,7 +381,6 @@ def predict(series_path: str) -> pl.DataFrame:
                 label: float(fallback_rng.uniform(0.02, 0.15))
                 for label in LABEL_COLS
             }
-
         vec = _expand_to_vector(preds, series_id)
         noise = rng.normal(0.0, 0.01, size=vec.shape)
         ensemble_inputs.append(np.clip(vec + noise, 1e-3, 1 - 1e-3))
@@ -297,13 +390,15 @@ def predict(series_path: str) -> pl.DataFrame:
 
     print(
         "📊 Final predictions: mean={:.4f}, max={:.4f}, aneurysm={:.4f}".format(
-            float(final_vec.mean()), float(final_vec.max()), float(final_vec[-1])
+            float(final_vec.mean()),
+            float(final_vec.max()),
+            float(final_vec[-1]),
         )
     )
 
     df = pl.DataFrame({label: [float(val)] for label, val in zip(LABEL_COLS, final_vec)})
 
-    shutil.rmtree("/kaggle/shared", ignore_errors=True)
+    # Do NOT delete the gateway's share directory here; the gateway manages it.
     gc.collect()
 
     return df.select(LABEL_COLS)
@@ -313,33 +408,41 @@ def predict(series_path: str) -> pl.DataFrame:
 # Optional local gateway for quick manual testing
 # ---------------------------------------------------------------------------
 
-
 def _run_local_gateway():  # pragma: no cover - helper for notebook testing
     if kaggle_server is None:
         print("⚠️ Kaggle evaluation server not available in this environment.")
         return
 
-    server = kaggle_server.RSNAInferenceServer(predict)
-    if os.getenv("KAGGLE_IS_COMPETITION_RERUN"):
-        print("🔄 Running in competition mode...")
-        server.serve()
-    else:
-        print("🧪 Running in local test mode...")
-        server.run_local_gateway()
+    # Use a guaranteed-empty temporary directory for the gateway's file sharing.
+    tmp_share = Path(tempfile.mkdtemp(prefix="rsna-share-"))
+    try:
+        server = kaggle_server.RSNAInferenceServer(predict)
+        if os.getenv("KAGGLE_IS_COMPETITION_RERUN"):
+            print("🔄 Running in competition mode...")
+            server.serve()
+        else:
+            print("🧪 Running in local test mode...")
+            server.run_local_gateway(file_share_dir=str(tmp_share))
+            try:
+                result_df = pl.read_parquet("/kaggle/working/submission.parquet")
+                print("\n📊 SUBMISSION SUMMARY:")
+                print(f"   Rows: {len(result_df)}")
+                print(f"   Columns: {len(result_df.columns)}")
+                for col in LABEL_COLS:
+                    if col in result_df.columns:
+                        values = result_df[col].to_numpy()
+                        print(
+                            f"   {col}: mean={np.mean(values):.4f}, "
+                            f"std={np.std(values):.4f}, range={np.min(values):.4f}-{np.max(values):.4f}"
+                        )
+            except Exception as exc:
+                print(f"📝 Local test completed - submission file generated: {exc}")
+    finally:
+        # Best effort cleanup; ignore if the gateway is still holding files.
         try:
-            result_df = pl.read_parquet("/kaggle/working/submission.parquet")
-            print("\n📊 SUBMISSION SUMMARY:")
-            print(f"   Rows: {len(result_df)}")
-            print(f"   Columns: {len(result_df.columns)}")
-            for col in LABEL_COLS:
-                if col in result_df.columns:
-                    values = result_df[col].to_numpy()
-                    print(
-                        f"   {col}: mean={np.mean(values):.4f}, "
-                        f"std={np.std(values):.4f}, range={np.min(values):.4f}-{np.max(values):.4f}"
-                    )
-        except Exception as exc:
-            print(f"📝 Local test completed - submission file generated: {exc}")
+            shutil.rmtree(tmp_share, ignore_errors=True)
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":  # pragma: no cover - script mode
@@ -349,4 +452,3 @@ if __name__ == "__main__":  # pragma: no cover - script mode
     _run_local_gateway()
     print("✅ RSNA Production Inference Server Ready!")
     print("=" * 60)
-
